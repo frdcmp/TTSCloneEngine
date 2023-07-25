@@ -1,3 +1,3 @@
 # api.py
-AUTHORIZATION = ""
-X_USER_ID = ""
+AUTHORIZATION = "aCr3Eipyyac9lnxRVzNnIcWfW452"
+X_USER_ID = "284e037e2c8e47818715c00e1d28ccb0"
