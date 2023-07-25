@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import os
 from pydub import AudioSegment
+from api import AUTHORIZATION, X_USER_ID
 
 # Function to save audio content to a WAV file without metadata
 def save_audio_to_wav(audio_url, output_file_path):
@@ -32,8 +33,8 @@ payload = {
 url = "https://play.ht/api/v1/convert"
 headers = {
     "accept": "application/json",
-    "Authorization": "",
-    "X-USER-ID": ""
+    "AUTHORIZATION": AUTHORIZATION,
+    "X-USER-ID": X_USER_ID,
 }
 
 if st.button("Convert to Speech"):
