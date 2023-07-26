@@ -17,46 +17,45 @@ st.title("Text to Speech Conversion")
 title = st.text_input("Enter a name for the audio file:", value="API-audio")
 text = st.text_input("Enter your text here:", value="Hi! I am a cool robot")
 
-# Check if the transcription_id has been set or not
-transcription_id = ""
 
+if st.button("TTS"):
 
-# Create the request payload
-payload = {
-    "content": [text],
-    "voice": "en-US-JennyNeural",
-    "title": title,
-    "transcriptionId": transcription_id
-}
+    url = "https://play.ht/api/v1/convert"
 
-# Make the request to the Play.ht API
-url = "https://play.ht/api/v1/convert"
-headers = {
-    "accept": "application/json",
-    "AUTHORIZATION": AUTHORIZATION,
-    "X-USER-ID": X_USER_ID,
-}
+    payload = {
+        "content": [text],
+        "voice": "en-US-JennyNeural",
+        "transcriptionId": "-NaIQlUGAcyixhyoaSgn",
+        "title": "API-audio"
+    }
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "AUTHORIZATION": AUTHORIZATION,
+        "X-USER-ID": X_USER_ID
+    }
 
-if st.button("Convert to Speech"):
     response = requests.post(url, json=payload, headers=headers)
-    response_data = response.json()
 
-    # Retrieve the transcription ID from the response_data if it's not set
-    if not transcription_id:
-        transcription_id = response_data.get("transcriptionId")
+    print(response.text)
 
-        # Save the transcription_id to session_state so that it persists between button clicks
-        st.session_state.transcription_id = transcription_id
+if st.button("Saveand play the audio file"):
+    url = "https://play.ht/api/v1/articleStatus?transcriptionId=-NaIQlUGAcyixhyoaSgn"
 
-    response = requests.get(f"https://play.ht/api/v1/articleStatus?transcriptionId={transcription_id}", headers=headers)
+    headers = {
+        "accept": "application/json",
+        "AUTHORIZATION": AUTHORIZATION,
+        "X-USER-ID": X_USER_ID
+    }
+
+    response = requests.get(url, headers=headers)
+
+    print(response.text)
     
     link = response.json()["audioUrl"]
-
-    # Play the audio
     st.audio(link)
 
     # Save the audio file at the location ./input as a WAV file, with the name of the title
     output_file_path = os.path.join("./input", f"{title}.wav")
     save_audio_to_wav(link, output_file_path)
-
     st.success(f"Audio file saved at {output_file_path}")
