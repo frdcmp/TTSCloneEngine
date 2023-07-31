@@ -1,3 +1,5 @@
 streamlit
 gtts
 langdetect
+streamlit-aggrid
+pydub
