@@ -57,20 +57,6 @@ def tts(text, title, voice):
     output_text = f"TTS created, the transcription ID is: {transcription_id}"
     return output_text
 
-# Function for SSML
-def ssml(text, title, voice):
-    transcription_id = load_trans_id("./tempo/trans_id.txt")
-    url = "https://play.ht/api/v1/convert"
-    payload = {
-        "ssml": [text],
-        "voice": voice,
-        "transcriptionId": transcription_id,
-        "title": title
-    }
-    response = requests.post(url, json=payload, headers=headers)
-    transcription_id = response.json()["transcriptionId"]
-    output_text = f"TTS created, the transcription ID is: {transcription_id}"
-    return output_text
 
 # Function for URL
 def url():
@@ -92,6 +78,25 @@ def url():
 
     return output_text, audio_file_path
 
+
+def get_favorites():
+    try:
+        with open("./tempo/favourites.txt", "r") as file:
+            favorites = file.read().strip().split("\n")
+            return favorites
+    except FileNotFoundError:
+        return []
+    
+# Function to save the selected voice to the "favourites.txt" file
+def save_to_favorites(voice_with_language):
+    try:
+        with open("./tempo/favourites.txt", "a") as file:
+            file.write(voice_with_language + "\n")
+        st.success("Voice added to favorites!")
+    except Exception as e:
+        st.error("Error occurred while saving the voice to favorites.")
+        st.error(e)
+    
 # Streamlit app
 def main():
     st.title("Text-to-Speech API Demo")
@@ -102,39 +107,49 @@ def main():
     # Create a new column with the voice name, languageCode, and gender combined
     df["voice_with_language"] = df["value"] + " - " + df["languageCode"] + " - " + df["gender"]
 
-
+    # Get favorited voices from the "favourites.txt" file
+    favorites = get_favorites()
 
     tab1, tab2, tab3 = st.tabs(["Voice", "TTS", "SSML"])
 
     with tab1:
         st.header("Select TTS Voice")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Create a multiselect box for filtering voices by language code
-            selected_genders = st.multiselect("Filter by Gender", df["gender"].unique())
-        with col2:
-            # Create a multiselect box for filtering voices by gender
+        # Create a checkbox for "Favourites"
+        show_favorites = st.checkbox("Favourites", value=False)
+
+        col1, col2 = st.columns([1, 1])
+
+        if show_favorites:
+            # Display favorited voices in the dropdown
+            selected_voice_with_lang = col1.selectbox("Select a voice", favorites)
             
-            selected_language_codes = st.multiselect("Filter by Language Code", df["languageCode"].unique())
+        else:
+            # Create a multiselect box for filtering voices by gender
+            selected_genders = col1.multiselect("Filter by Gender", df["gender"].unique())
 
-        # Filter the DataFrame based on the selected language codes and genders
-        filtered_df = df[
-            (df["languageCode"].isin(selected_language_codes)) & (df["gender"].isin(selected_genders))
-        ] if (selected_language_codes and selected_genders) else df
+            # Create a multiselect box for filtering voices by language code
+            selected_language_codes = col2.multiselect("Filter by Language Code", df["languageCode"].unique())
 
+            # Filter the DataFrame based on the selected language codes and genders
+            filtered_df = df[
+                (df["languageCode"].isin(selected_language_codes)) & (df["gender"].isin(selected_genders))
+            ] if (selected_language_codes and selected_genders) else df
 
-        # Voice selection with both voice name, languageCode, and gender
-        selected_voice_with_lang = st.selectbox("Select a voice", filtered_df["voice_with_language"])
+            # Voice selection with both voice name, languageCode, and gender
+            selected_voice_with_lang = st.selectbox("Select a voice", filtered_df["voice_with_language"])
 
         # Extract the voice value (without languageCode and gender) from the selected option
         voice = selected_voice_with_lang.split(" - ")[0]
-
+        voice_with_language = selected_voice_with_lang
         # Get the value of the "sample" column for the selected voice
-        selected_voice_sample = filtered_df.loc[filtered_df["value"] == voice, "sample"].values[0]
+        selected_voice_sample = df.loc[df["value"] == voice, "sample"].values[0]
 
         # Display the "sample" value for the selected voice
         st.audio(selected_voice_sample)
+
+        # Button to save the selected voice to favorites
+        if not show_favorites:
+            st.button("Save to favorites", on_click=save_to_favorites, args=(voice_with_language,))
 
 
     with tab2:
@@ -166,8 +181,6 @@ def main():
         if st.button("SSML", use_container_width=True):
             output_text = ssml(text, "API-audio", voice)
             st.write(output_text)
-
-
 
 if __name__ == "__main__":
     main()
