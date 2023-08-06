@@ -6,7 +6,7 @@ import pandas as pd
 from st_aggrid import GridOptionsBuilder, AgGrid
 from st_aggrid.shared import GridUpdateMode, DataReturnMode
 
-sys.path.append('./temp/')  # Add the './API/' directory to the module search path
+sys.path.append('./tempo/')  # Add the './API/' directory to the module search path
 from api import AUTHORIZATION, X_USER_ID
 from pydub import AudioSegment
 
@@ -44,7 +44,7 @@ def load_trans_id(filename):
 
 # Function for TTS
 def tts(text, title, voice):
-    transcription_id = load_trans_id("./temp/trans_id.txt")
+    transcription_id = load_trans_id("./tempo/trans_id.txt")
     url = "https://play.ht/api/v1/convert"
     payload = {
         "content": [text],
@@ -59,7 +59,7 @@ def tts(text, title, voice):
 
 # Function for SSML
 def ssml(text, title, voice):
-    transcription_id = load_trans_id("./temp/trans_id.txt")
+    transcription_id = load_trans_id("./tempo/trans_id.txt")
     url = "https://play.ht/api/v1/convert"
     payload = {
         "ssml": [text],
@@ -74,7 +74,7 @@ def ssml(text, title, voice):
 
 # Function for URL
 def url():
-    transcription_id = load_trans_id("./temp/trans_id.txt")
+    transcription_id = load_trans_id("./tempo/trans_id.txt")
     response = requests.get(f"https://play.ht/api/v1/articleStatus?transcriptionId={transcription_id}", headers=headers)
     audio_url = response.json()["audioUrl"]
     output_text = f"Link to the media file: {audio_url}"
@@ -104,23 +104,37 @@ def main():
 
 
 
-
     tab1, tab2, tab3 = st.tabs(["Voice", "TTS", "SSML"])
 
     with tab1:
         st.header("Select TTS Voice")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Create a multiselect box for filtering voices by language code
+            selected_genders = st.multiselect("Filter by Gender", df["gender"].unique())
+        with col2:
+            # Create a multiselect box for filtering voices by gender
+            
+            selected_language_codes = st.multiselect("Filter by Language Code", df["languageCode"].unique())
+
+        # Filter the DataFrame based on the selected language codes and genders
+        filtered_df = df[
+            (df["languageCode"].isin(selected_language_codes)) & (df["gender"].isin(selected_genders))
+        ] if (selected_language_codes and selected_genders) else df
+
+
         # Voice selection with both voice name, languageCode, and gender
-        selected_voice_with_lang = st.selectbox("Select a voice", df["voice_with_language"])
+        selected_voice_with_lang = st.selectbox("Select a voice", filtered_df["voice_with_language"])
 
         # Extract the voice value (without languageCode and gender) from the selected option
         voice = selected_voice_with_lang.split(" - ")[0]
 
         # Get the value of the "sample" column for the selected voice
-        selected_voice_sample = df.loc[df["value"] == voice, "sample"].values[0]
+        selected_voice_sample = filtered_df.loc[filtered_df["value"] == voice, "sample"].values[0]
 
         # Display the "sample" value for the selected voice
         st.audio(selected_voice_sample)
-
 
 
     with tab2:
