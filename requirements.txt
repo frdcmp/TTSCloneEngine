@@ -3,3 +3,6 @@ gtts
 langdetect
 streamlit-aggrid
 pydub
+pip install git+https://github.com/NeveIsa/streamlit_ttyd
+openpyxl
+

@@ -1,14 +1,14 @@
 import os
-import gradio as gr
-import sys
-
-
-
-# TTS
-sys.path.append('./tempo/')  # Add the './API/' directory to the module search path
-from api import AUTHORIZATION, X_USER_ID
 import requests
+import streamlit as st
+import sys
+import pandas as pd
+
+sys.path.append('./temp/') 
+from api import AUTHORIZATION, X_USER_ID
 from pydub import AudioSegment
+
+st.set_page_config(layout="wide")
 
 headers = {
     "accept": "application/json",
@@ -22,84 +22,106 @@ def get_voice_values():
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         voices_data = response.json().get("voices", [])
-        # Modify the list to include voice name, language code, and gender
-        return [f"{voice['value']} ({voice['languageCode']} - {voice['gender']})" for voice in voices_data]
+        return voices_data
     else:
         raise ValueError("Failed to fetch voice data from the API.")
 
-voice_values = get_voice_values()
+def save_to_excel(voices_data, filename):
+    df = pd.DataFrame(voices_data)
+    df.to_excel(filename, index=False)
 
-def extract_voice_name(full_voice):
-    # Extract the voice name from the format "Voice Name (Language Code - Gender)"
-    return full_voice.split(" (")[0]
+def load_from_excel(filename):
+    return pd.read_excel(filename)
 
-def load_trans_id(filename):
-    try:
-        with open(filename, "r") as file:
-            transcription_id = file.read().strip()
-            return transcription_id
-    except FileNotFoundError:
-        return ""
+def save_to_favourites(voice_data, filename):
+    df = pd.DataFrame(voice_data)
+    if os.path.exists(filename):
+        existing_df = pd.read_excel(filename)
+        df = pd.concat([existing_df, df], ignore_index=True)
+    df = df.sort_values(by=["languageCode"]).reset_index(drop=True)  # Sort by language code
+    df.to_excel(filename, index=False)
 
-def tts(text, title, voice):
-    # Extract the voice name from the selected option
-    voice_name = extract_voice_name(voice)
-    
-    transcription_id = load_trans_id("./tempo/trans_id.txt")
-    url = "https://play.ht/api/v1/convert"
-    payload = {
-        "content": [text],
-        "voice": voice_name,  # Use the extracted voice name
-        "transcriptionId": transcription_id,
-        "title": title
-    }
-    response = requests.post(url, json=payload, headers=headers)
-    transcription_id = response.json()["transcriptionId"]
-    output_text = f"TTS created, the transcription ID is: {transcription_id}"
-    return output_text
+def main():
+    st.title("Text-to-Speech API Demo")
+    excel_voices = "./temp/voices.xlsx"
+    excel_favourites = "./temp/favourites.xlsx"
 
-def url():
-    transcription_id = load_trans_id("./tempo/trans_id.txt")
-    response = requests.get(f"https://play.ht/api/v1/articleStatus?transcriptionId={transcription_id}", headers=headers)
-    audio_url = response.json()["audioUrl"]
-    output_text = f"Link to the media file: {audio_url}"
 
-    # Download the audio file from the URL and save it to the './API' folder
-    input_folder = "./API"
-    os.makedirs(input_folder, exist_ok=True)
-    audio_file_path = os.path.join(input_folder, "API-audio.wav")
+    col1, col2 = st.columns(2)
 
-    with requests.get(audio_url, stream=True) as response:
-        response.raise_for_status()
-        with open(audio_file_path, "wb") as audio_file:
-            for chunk in response.iter_content(chunk_size=8192):
-                audio_file.write(chunk)
+    with col1:
+        st.write("Click to update the voice sample list")
+        update_button = st.button("Update Voice List")
+    with col2:
+        #FAVOURITES?
+        st.write("Shows Favourite Voices")
+        show_favorites = st.checkbox("Favourites", value=False)
+        
+        if show_favorites:
+            df = load_from_excel(excel_favourites)
+        else:
+            df = load_from_excel(excel_voices)
 
-    return output_text, audio_file_path
+    #Update Voices Database Button
+    if update_button:
+        st.write("Fetching voice data from the API...")
+        voice_data = get_voice_values()
+        save_to_excel(voice_data, excel_voices)
+        st.write("Voice list updated!")
 
-with gr.Blocks() as demo:
-    # First Column
-    with gr.Row():
-        title = gr.Textbox(label="Enter a name for the audio file:", value="API-audio")
-        voice_dropdown = gr.Dropdown(choices=voice_values, label="Select a voice", )
+    #Create a voiceID
+    df["voiceID"] = df["value"] + " - " + df["languageCode"] + " - " + df["gender"]
 
-    # Second Column
-    with gr.Row():
-        text = gr.Textbox(label="Enter your text here:", lines=5, value="Madonna tacchina!!")
 
-    # Third Column
-    with gr.Row():
-        output = gr.Textbox(label="Output Values")
-        audio = gr.Audio(label="TTS Box")
+    col1, col2 = st.columns(2)
 
-    # Fourth Column
-    with gr.Row():
-        tts_button = gr.Button("TTS", variant="primary")
-        tts_button.click(lambda text, title, voice: tts(text, title, extract_voice_name(voice)), inputs=[text, title, voice_dropdown], outputs=output)
+    with col1:
+        # Create a multiselect box for filtering voices by gender
+        selected_genders = st.multiselect("Filter by Gender", df["gender"].unique(), ['Male', 'Female'])
+    with col2:
+        # Create a multiselect box for filtering voices by language code
+        selected_language_codes = st.multiselect("Filter by Language Code", df["languageCode"].unique())
 
-    # Fifth Column
-    with gr.Row():
-        url_button = gr.Button("Download and Play")
-        url_button.click(url, outputs=[output, audio])
+    # Filter the DataFrame based on the selected language codes and genders
+    filtered_df = df[
+        (df["languageCode"].isin(selected_language_codes)) & (df["gender"].isin(selected_genders))
+    ] if (selected_language_codes and selected_genders) else df
 
-demo.launch()
+
+
+
+    # Voice selection with both voice name, languageCode, and gender
+    selected_voiceID = st.selectbox("Select a voice", filtered_df["voiceID"])
+
+    # Extract the voice value (without languageCode and gender) from the selected option
+    voice = selected_voiceID.split(" - ")[0]
+
+
+    col1, col2 = st.columns(2)
+    with col1:
+        # Save to Favourites Button
+        save_favourites_button = st.button("Save to favourites")
+
+    with col2:
+        # Remove from Favourites Button
+        remove_favourites_button = st.button("Remove from favourites")
+
+    if save_favourites_button:
+        selected_voice_row = df[df["voiceID"] == selected_voiceID]
+        save_to_favourites(selected_voice_row, excel_favourites)
+        st.write("Voice saved to favourites!")
+
+    # Get the value of the "sample" column for the selected voice
+    selected_voice = df.loc[df["value"] == voice, "sample"].values[0]
+
+    # Display the "sample" value for the selected voice
+    st.audio(selected_voice)
+
+    if remove_favourites_button:
+        df_favourites = load_from_excel(excel_favourites)
+        df_favourites = df_favourites[df_favourites["voiceID"] != selected_voiceID]
+        df_favourites.to_excel(excel_favourites, index=False)
+        st.write("Voice removed from favourites!")
+
+if __name__ == "__main__":
+    main()

@@ -6,7 +6,7 @@ import pandas as pd
 from st_aggrid import GridOptionsBuilder, AgGrid
 from st_aggrid.shared import GridUpdateMode, DataReturnMode
 
-sys.path.append('./tempo/')  # Add the './API/' directory to the module search path
+sys.path.append('./temp/')  # Add the './API/' directory to the module search path
 from api import AUTHORIZATION, X_USER_ID
 from pydub import AudioSegment
 
@@ -44,7 +44,7 @@ def load_trans_id(filename):
 
 # Function for TTS
 def tts(text, title, voice):
-    transcription_id = load_trans_id("./tempo/trans_id.txt")
+    transcription_id = load_trans_id("./temp/trans_id.txt")
     url = "https://play.ht/api/v1/convert"
     payload = {
         "content": [text],
@@ -60,7 +60,7 @@ def tts(text, title, voice):
 
 # Function for URL
 def url():
-    transcription_id = load_trans_id("./tempo/trans_id.txt")
+    transcription_id = load_trans_id("./temp/trans_id.txt")
     response = requests.get(f"https://play.ht/api/v1/articleStatus?transcriptionId={transcription_id}", headers=headers)
     audio_url = response.json()["audioUrl"]
     output_text = f"Link to the media file: {audio_url}"
@@ -81,17 +81,17 @@ def url():
 
 def get_favorites():
     try:
-        with open("./tempo/favourites.txt", "r") as file:
+        with open("./temp/favourites.txt", "r") as file:
             favorites = file.read().strip().split("\n")
             return favorites
     except FileNotFoundError:
         return []
     
 # Function to save the selected voice to the "favourites.txt" file
-def save_to_favorites(voice_with_language):
+def save_to_favorites(voiceID):
     try:
-        with open("./tempo/favourites.txt", "a") as file:
-            file.write(voice_with_language + "\n")
+        with open("./temp/favourites.txt", "a") as file:
+            file.write(voiceID + "\n")
         st.success("Voice added to favorites!")
     except Exception as e:
         st.error("Error occurred while saving the voice to favorites.")
@@ -105,7 +105,7 @@ def main():
     df = pd.DataFrame(voice_data)
 
     # Create a new column with the voice name, languageCode, and gender combined
-    df["voice_with_language"] = df["value"] + " - " + df["languageCode"] + " - " + df["gender"]
+    df["voiceID"] = df["value"] + " - " + df["languageCode"] + " - " + df["gender"]
 
     # Get favorited voices from the "favourites.txt" file
     favorites = get_favorites()
@@ -136,11 +136,11 @@ def main():
             ] if (selected_language_codes and selected_genders) else df
 
             # Voice selection with both voice name, languageCode, and gender
-            selected_voice_with_lang = st.selectbox("Select a voice", filtered_df["voice_with_language"])
+            selected_voice_with_lang = st.selectbox("Select a voice", filtered_df["voiceID"])
 
         # Extract the voice value (without languageCode and gender) from the selected option
         voice = selected_voice_with_lang.split(" - ")[0]
-        voice_with_language = selected_voice_with_lang
+        voiceID = selected_voice_with_lang
         # Get the value of the "sample" column for the selected voice
         selected_voice_sample = df.loc[df["value"] == voice, "sample"].values[0]
 
@@ -149,7 +149,7 @@ def main():
 
         # Button to save the selected voice to favorites
         if not show_favorites:
-            st.button("Save to favorites", on_click=save_to_favorites, args=(voice_with_language,))
+            st.button("Save to favorites", on_click=save_to_favorites, args=(voiceID,))
 
 
     with tab2:

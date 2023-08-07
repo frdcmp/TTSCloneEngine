@@ -1,0 +1,6 @@
+Matthew - en-US - Male
+it-IT-IsabellaNeural - it-IT - Female
+Joanna - en-US - Female
+Isabella - es-US - Female
+es-US-PalomaNeural - es-US - Female
+es-MX-LarissaNeural - es-MX - Female
