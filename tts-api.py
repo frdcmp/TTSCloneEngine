@@ -13,7 +13,6 @@ from pydub import AudioSegment
 # Set Streamlit to wide mode
 st.set_page_config(layout="wide")
 
-
 headers = {
     "accept": "application/json",
     "content-type": "application/json",
@@ -90,6 +89,14 @@ def save_to_favourites(voice_data, filename):
     df = df.sort_values(by=["languageCode"]).reset_index(drop=True)  # Sort by language code
     df.to_excel(filename, index=False)
 
+def get_voice_index():
+    if 'voice_index' not in st.session_state:
+        st.session_state.voice_index = 0
+    return st.session_state.voice_index
+
+def reset_voice_index():
+    st.session_state.voice_index = 0
+
 # Streamlit app
 def main():
     st.title("Text-to-Speech API")
@@ -147,6 +154,16 @@ def main():
             st.data_editor(visualize_df)
 
 
+            #markers_df = AgGrid(
+            #    visualize_df,
+            #    reload_data=False,
+            #    editable=True,
+            #    theme="streamlit",
+            #    data_return_mode=DataReturnMode.AS_INPUT,
+            #    update_mode=GridUpdateMode.MODEL_CHANGED,
+            #)
+
+
             col1, col2 = st.columns(2)
             with col1:
                 # Save to Favourites Button
@@ -158,8 +175,20 @@ def main():
 
         st.divider()
 
+
+        # Initialize a session state to keep track of the selected index
+        if 'voice_index' not in st.session_state:
+            st.session_state.voice_index = 0
+
         # Voice selection with both voice name, languageCode, and gender
-        selected_voiceID = st.selectbox("Select a voice", filtered_df["voiceID"])
+        selected_voiceID = st.selectbox("Select a voice", filtered_df['voiceID'], index=st.session_state.voice_index)
+
+        col1, col2 = st.columns(2)
+        if col1.button("Back") and st.session_state.voice_index > 0:
+            st.session_state.voice_index -= 1
+        if col2.button("Next") and st.session_state.voice_index < len(filtered_df) - 1:
+            st.session_state.voice_index += 1
+            
 
         # Extract the voice value (without languageCode and gender) from the selected option
         voice = selected_voiceID.split(" - ")[0]
