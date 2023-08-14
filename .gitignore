@@ -6,11 +6,12 @@ modules/
 api.py
 hubert_base.pt
 *.pt
-*.pth
+
 
 # C extensions
 *.so
 *.wav
+*.mp3
 
 # Distribution / packaging
 .Python
