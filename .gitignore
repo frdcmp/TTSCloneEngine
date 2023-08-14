@@ -6,6 +6,7 @@ modules/
 api.py
 hubert_base.pt
 *.pt
+*.pth
 
 # C extensions
 *.so
