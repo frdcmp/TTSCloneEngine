@@ -23,6 +23,7 @@ pip install torch torchvision torchaudio ffmpeg-python --no-input
 
 
 # Clone the Git repository
+mkdir modules
 cd modules
 git clone https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI.git
 cd Retrieval-based-Voice-Conversion-WebUI
