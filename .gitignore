@@ -1,8 +1,11 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+modules/
 *.py[cod]
 *$py.class
 api.py
+hubert_base.pt
+*.pt
 
 # C extensions
 *.so
