@@ -1,6 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
-modules/
+modules/Retrieval-based-Voice-Conversion-WebUI/
 *.py[cod]
 *$py.class
 api.py
