@@ -11,6 +11,7 @@ hubert_base.pt
 # C extensions
 *.so
 *.wav
+*.mp3
 
 # Distribution / packaging
 .Python
