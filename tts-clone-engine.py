@@ -249,7 +249,10 @@ def main():
 
 ####### Tab x: Resampling the voice
         st.caption("")
-        st.caption("Adjust TTS speed")
+
+
+        
+
 
         # Define fixed variables
         with open('./temp/path.txt') as f:
@@ -257,66 +260,71 @@ def main():
             weight_folder = f.readline().strip()
 
         audio_files = get_audio_files(input_folder)
-        selected_file = st.selectbox("Select an audio file for resampling", audio_files)
+
+        with st.expander("Adjust TTS speed", expanded = False):
+            selected_file = st.selectbox("Select an audio file for resampling", audio_files)
 
 
 
-        with st.form("Adjust TTS speed"):
-            if selected_file:
-                input_path = os.path.join(input_folder, selected_file)
+            with st.form("Adjust TTS speed"):
+                if selected_file:
+                    input_path = os.path.join(input_folder, selected_file)
 
-                # Get original sample rate
-                spf = wave.open(input_path, 'rb')
-                original_sample_rate = spf.getframerate()
-                spf.close()
-
-                # Calculate output sample rate based on slider percentage
-                slider_percentage = st.slider("Select Output Sample Rate", 50, 200, 100)
-                output_sample_rate = int(original_sample_rate * slider_percentage / 100)
-                
-                submitted = st.form_submit_button("Convert and Save", use_container_width=True)
-                # Convert and save the new audio file
-                if submitted:
-
-                    signal = open(input_path, 'rb').read()
-
-                    # Construct the output filename with "_resampled" prefix
-                    filename, file_extension = os.path.splitext(selected_file)
-                    output_filename = f"{filename}_resampled{file_extension}"
-                    output_path = os.path.join(input_folder, output_filename)
-
-                    wf = wave.open(output_path, 'wb')
+                    # Get original sample rate
                     spf = wave.open(input_path, 'rb')
-                    CHANNELS = spf.getnchannels()
-                    swidth = spf.getsampwidth()
-                    wf.setnchannels(CHANNELS)
-                    wf.setsampwidth(swidth)
-                    wf.setframerate(output_sample_rate)
-                    wf.writeframes(signal)
-                    wf.close()
-                    st.success(f"Audio conversion and save successful. Check './input/{output_filename}'. Output Sample Rate: {output_sample_rate} Hz.")
+                    original_sample_rate = spf.getframerate()
+                    spf.close()
+
+                    # Calculate output sample rate based on slider percentage
+                    slider_percentage = st.slider("Select Output Sample Rate", 50, 200, 100)
+                    output_sample_rate = int(original_sample_rate * slider_percentage / 100)
                     
+                    submitted = st.form_submit_button("Convert and Save", use_container_width=True)
+                    # Convert and save the new audio file
+                    if submitted:
 
-                    #st.audio(input_path)               
-                    st.audio(output_path)
+                        signal = open(input_path, 'rb').read()
+
+                        # Construct the output filename with "_resampled" prefix
+                        filename, file_extension = os.path.splitext(selected_file)
+                        output_filename = f"{filename}_resampled{file_extension}"
+                        output_path = os.path.join(input_folder, output_filename)
+
+                        wf = wave.open(output_path, 'wb')
+                        spf = wave.open(input_path, 'rb')
+                        CHANNELS = spf.getnchannels()
+                        swidth = spf.getsampwidth()
+                        wf.setnchannels(CHANNELS)
+                        wf.setsampwidth(swidth)
+                        wf.setframerate(output_sample_rate)
+                        wf.writeframes(signal)
+                        wf.close()
+                        st.success(f"Audio conversion and save successful. Check './input/{output_filename}'. Output Sample Rate: {output_sample_rate} Hz.")
+                        
+
+                        #st.audio(input_path)               
+                        st.audio(output_path)
 
 
-        # Button for TTS
-        if tts_button:
-            output_text = tts(text, title, voice)
-            output_text, audio_file_path = url(title)
-            st.write(output_text)
 
-            # Display the audio file
-            st.audio(audio_file_path)
+        with st.expander("Output", expanded = True):
+            #st.caption("Audio output:")
+            # Button for TTS
+            if tts_button:
+                output_text = tts(text, title, voice)
+                output_text, audio_file_path = url(title)
+                st.success(output_text)
 
-        # Button for Download and Play
-        if refresh_button:
-            output_text, audio_file_path = url(title)
-            st.write(output_text)
+                # Display the audio file
+                st.audio(audio_file_path)
 
-            # Display the audio file
-            st.audio(audio_file_path)
+            # Button for Download and Play
+            if refresh_button:
+                output_text, audio_file_path = url(title)
+                st.success(output_text)
+
+                # Display the audio file
+                st.audio(audio_file_path)
 
 
 
@@ -346,9 +354,19 @@ def main():
 
         # Play the source TTS
         st.audio(input_path)
+
+
+
+        with st.expander("Indexing settings", expanded = False):
+       
+
+            index_rate = st.slider("Index Rate", min_value=0.0, max_value=1.0, value=0.0, step=0.05, label_visibility="visible")
         
-
-
+            if index_rate == 0:
+                index_file_path = ""
+            else:
+                #index_file_path = st.text_input("Index File Path")
+                index_file_path = st.selectbox("Select a Index Path", index_files)
 
 
         with st.form("Clone the voice"):
@@ -369,17 +387,7 @@ def main():
             with col2:
                 method = st.selectbox("Method", ["harvest", "pm", "crepe"])
 
-            with col1:
-                with st.expander("Index Rate", expanded = True):
-                    index_rate = st.slider("Index Rate", min_value=0.0, max_value=1.0, value=0.0, step=0.5, label_visibility="collapsed")
-            with col2:               
-                if index_rate == 0:
-                    index_file_path = st.selectbox("Select a Index Path. Ignore if the index rate is null.", index_files)
-                    index_file_path = ""
-                else:
-                    #index_file_path = st.text_input("Index File Path")
-                    
-                    index_file_path = st.selectbox("Select a Index Path", index_files)
+
                     
 
 
