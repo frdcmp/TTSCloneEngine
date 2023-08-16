@@ -6,6 +6,8 @@ import pandas as pd
 import subprocess
 import wave
 import shutil
+import io
+
 
 sys.path.append('./temp/')  # Add the './API/' directory to the module search path
 from api import AUTHORIZATION, X_USER_ID
@@ -72,16 +74,24 @@ def url(title):
     audio_url = response.json()["audioUrl"]
     output_text = f"Link to the media file: {audio_url}"
 
-    # Download the audio file from the URL and save it to the './input' folder
+    # Download the audio file from the URL
+    response = requests.get(audio_url, stream=True)
+    response.raise_for_status()
+
+    audio_data = response.content
+
+    # Convert audio data to 48kHz mono WAV format
+    audio = AudioSegment.from_file(io.BytesIO(audio_data))
+    audio = audio.set_frame_rate(48000).set_channels(1)
+    audio_data = audio.export(format="wav").read()
+
+    # Save the audio data to the './input' folder
     input_folder = "./input"
     os.makedirs(input_folder, exist_ok=True)
     audio_file_path = os.path.join(input_folder, title + ".wav")
 
-    with requests.get(audio_url, stream=True) as response:
-        response.raise_for_status()
-        with open(audio_file_path, "wb") as audio_file:
-            for chunk in response.iter_content(chunk_size=8192):
-                audio_file.write(chunk)
+    with open(audio_file_path, "wb") as audio_file:
+        audio_file.write(audio_data)
 
     return output_text, audio_file_path
 
@@ -250,10 +260,6 @@ def main():
 ####### Tab x: Resampling the voice
         st.caption("")
 
-
-        
-
-
         # Define fixed variables
         with open('./temp/path.txt') as f:
             input_folder = f.readline().strip()
@@ -268,7 +274,7 @@ def main():
 
             with st.form("Adjust TTS speed"):
                 if selected_file:
-                    input_path = os.path.join(input_folder, selected_file)
+                    input_path = os.path.join(input_folder, selected_file)            
 
                     # Get original sample rate
                     spf = wave.open(input_path, 'rb')
