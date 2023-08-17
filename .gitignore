@@ -8,6 +8,9 @@ hubert_base.pt
 *.pt
 *.pth
 *.index
+*.xlsx
+*.txt
+
 
 # C extensions
 *.so
