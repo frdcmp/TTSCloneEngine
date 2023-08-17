@@ -4,7 +4,6 @@
 
 TTSCloneEngine is a Python program that combines text-to-speech (TTS) generation from an API (play.ht) with the Retrieval-based Voice Conversion (RVC) technique for cloning speech.
 
-
 ## Installation with the setup
 
 1. Create a Python 3.10 environment using conda:
@@ -16,8 +15,6 @@ TTSCloneEngine is a Python program that combines text-to-speech (TTS) generation
    ```bash
     chmod +x setup.sh
     ./setup.sh
-
-
 
 ## Manual installation
 
@@ -38,7 +35,6 @@ TTSCloneEngine is a Python program that combines text-to-speech (TTS) generation
 3. Run the Streamlit application:
    ```bash
     streamlit run tts-clone-engine.py
-
 
 ## Configure API credentials by creating an api.py file in the ./temp folder:
     # api.py
