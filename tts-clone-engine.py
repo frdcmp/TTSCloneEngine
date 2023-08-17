@@ -54,6 +54,10 @@ def load_trans_id(filename):
     except FileNotFoundError:
         return ""
 
+def save_trans_id(filename, transcription_id):
+    with open(filename, "w") as file:
+        file.write(transcription_id)
+
 def tts(text, title, voice):
     transcription_id = load_trans_id("./temp/trans_id.txt")
     url = "https://play.ht/api/v1/convert"
@@ -239,19 +243,28 @@ def main():
 ####### Tab 2: Select the TTS voice
     with tab2:
         st.header("Generate the TTS")
-        col1, col2 = st.columns([1,3])
+
+        # Text input
+        
+        col1, col2, col3 = st.columns([3,1,1])
 
         with col1:
+            text = st.text_area("Enter your text here", "Madonna tacchina!!")
             
+        with col2:  
             title = st.text_input("Name the audio file", "API-audio")
             
-            refresh_button = st.button("Refresh", use_container_width=True)
-        with col2:    
-            # Text input
-            text = st.text_area("Enter your text here", "Madonna tacchina!!")
-        
-        tts_button = st.button("TTS", type="primary", use_container_width=True)
 
+        with col3:   
+            transcription_id = load_trans_id("./temp/trans_id.txt")
+            new_transcription_id = st.text_input("Transcription_id", value=transcription_id)
+            if st.button("Save transcription"):
+                save_trans_id("./temp/trans_id.txt", new_transcription_id)
+                st.write("Transcription ID saved successfully!")
+
+
+        tts_button = st.button("TTS", type="primary", use_container_width=True)
+        refresh_button = st.button("Download Audio", use_container_width=True) 
 
         
 
@@ -318,11 +331,11 @@ def main():
             # Button for TTS
             if tts_button:
                 output_text = tts(text, title, voice)
-                output_text, audio_file_path = url(title)
+                #output_text, audio_file_path = url(title)
                 st.success(output_text)
 
                 # Display the audio file
-                st.audio(audio_file_path)
+                #st.audio(audio_file_path)
 
             # Button for Download and Play
             if refresh_button:
