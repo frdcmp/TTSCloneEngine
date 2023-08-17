@@ -1,2 +1,2 @@
 ./input
-/mnt/c/Users/fdc19/Nextcloud/python-projects/RVS Training
+./weights
