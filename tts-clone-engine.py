@@ -69,7 +69,7 @@ def tts(text, title, voice):
     }
     response = requests.post(url, json=payload, headers=headers)
     transcription_id = response.json()["transcriptionId"]
-    output_text = f"TTS created, the transcription ID is: {transcription_id}"
+    output_text = f"TTS created, the transcription ID is: {transcription_id}. Please save it in Transcription ID text box if empty"
     return output_text
 
 def url(title):
@@ -260,7 +260,7 @@ def main():
             new_transcription_id = st.text_input("Transcription_id", value=transcription_id)
             if st.button("Save transcription"):
                 save_trans_id("./temp/trans_id.txt", new_transcription_id)
-                st.write("Transcription ID saved successfully!")
+                st.success("Transcription ID saved successfully!")
 
 
         tts_button = st.button("TTS", type="primary", use_container_width=True)
