@@ -1,2 +1,2 @@
 ./input
-./weights
+/mnt/c/Users/francesco.decampo/OneDrive - Andovar/Project_Deliveries/python-projects/voices
