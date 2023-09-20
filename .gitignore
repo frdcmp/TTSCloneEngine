@@ -9,7 +9,6 @@ hubert_base.pt
 *.pth
 *.index
 *.xlsx
-*.txt
 
 
 # C extensions
